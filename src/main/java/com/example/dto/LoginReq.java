@@ -1,4 +1,4 @@
-package ru.skypro.homework.model.user;
+package com.example.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,9 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class LoginReq {
 
-    private String password;
     private String username;
-
-    public LoginReq() {}
-
+    private String password;
 }
