@@ -22,6 +22,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
+    private static final String[] AUTH_WHITELIST = {
+            "/swagger-resources/**",
+            "/swagger-ui/index.html#/**",
+            "/swagger-ui/index.html",
+            "/v3/api-docs",
+            "/webjars/**",
+            "/auth/**", "/api/**"
+    };
+
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
@@ -34,9 +43,9 @@ public class SecurityConfig {
                 .authenticationEntryPoint(unauthorizedHandler).and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/**")
+                .antMatchers(AUTH_WHITELIST)
                 .permitAll()
-                .antMatchers("/api/test/**")
+                .antMatchers("/test/**")
                 .permitAll().anyRequest().authenticated();
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
@@ -56,4 +65,5 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
+
 }
