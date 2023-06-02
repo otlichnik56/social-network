@@ -98,12 +98,14 @@ public class UserService {
      * @param toUser
      */
     public void sendFriendship(Long fromUser, Long toUser) {
-        FriendRequest friendRequest = new FriendRequest();
-        friendRequest.setFromUser(fromUser);
-        friendRequest.setToUser(toUser);
-        friendRequest.setStatus(Status.ACTIVE);
-        friendRequest.setDateRequest(LocalDate.now());
-        subscribe(fromUser, toUser);
+        if (checkUser(toUser)) {
+            FriendRequest friendRequest = new FriendRequest();
+            friendRequest.setFromUser(fromUser);
+            friendRequest.setToUser(toUser);
+            friendRequest.setStatus(Status.ACTIVE);
+            friendRequest.setDateRequest(LocalDate.now());
+            subscribe(fromUser, toUser);
+        }
     }
 
     /** отменить заявку в друзья
@@ -162,14 +164,18 @@ public class UserService {
      * @return
      */
     public String deleteFriend(Long fromUser, Long toUser) {
-        FriendRequest friendRequest = friendRequestRepository.findFriend(fromUser, toUser).orElse(null);
-        if (friendRequest == null) {
-            return ANSWER_NOT_FOUND;
+        if (checkUser(toUser)) {
+            FriendRequest friendRequest = friendRequestRepository.findFriend(fromUser, toUser).orElse(null);
+            if (friendRequest == null) {
+                return ANSWER_NOT_FOUND;
+            } else {
+                friendRequest.setStatus(Status.NOT_ACTIVE);
+                friendRequestRepository.save(friendRequest);
+                unsubscribe(fromUser, toUser);
+                return "successfully unfriended";
+            }
         } else {
-            friendRequest.setStatus(Status.NOT_ACTIVE);
-            friendRequestRepository.save(friendRequest);
-            unsubscribe(fromUser, toUser);
-            return "successfully unfriended";
+            return ANSWER_NOT_FOUND;
         }
     }
 
@@ -199,12 +205,14 @@ public class UserService {
      * @param toUser
      */
     public void subscribe(Long fromUser, Long toUser) {
-        Subscription subscription = new Subscription();
-        subscription.setFromUser(fromUser);
-        subscription.setToUser(toUser);
-        subscription.setStatus(true);
-        subscription.setDateSubscription(LocalDate.now());
-        subscriptionRepository.save(subscription);
+        if (checkUser(toUser)) {
+            Subscription subscription = new Subscription();
+            subscription.setFromUser(fromUser);
+            subscription.setToUser(toUser);
+            subscription.setStatus(true);
+            subscription.setDateSubscription(LocalDate.now());
+            subscriptionRepository.save(subscription);
+        }
     }
 
     /** Отписаться от пользователя
@@ -236,6 +244,15 @@ public class UserService {
             userDto.setUsername(user.getUsername());
             userDto.setEmail(user.getEmail());
             return userDto;
+        }
+    }
+
+    private boolean checkUser(Long id) {
+        User user = userRepository.findById(String.valueOf(id)).orElse(null);
+        if (user == null) {
+            return false;
+        } else {
+            return true;
         }
     }
 

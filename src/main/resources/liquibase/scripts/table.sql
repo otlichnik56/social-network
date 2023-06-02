@@ -30,3 +30,16 @@ CREATE TABLE subscriptions
     status              BOOLEAN NOT NULL,
     date_subscription   TIMESTAMP
 );
+
+
+-- changeset nurkatovich:3
+
+CREATE TABLE publications
+(
+    id          SERIAL PRIMARY KEY,
+    author_id   INTEGER,
+    username    TEXT,
+    header      TEXT,
+    text        TEXT,
+    image       OID
+);
