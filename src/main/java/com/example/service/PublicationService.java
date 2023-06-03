@@ -6,95 +6,109 @@ import com.example.entity.Subscription;
 import com.example.entity.User;
 import com.example.repository.PublicationRepository;
 import com.example.repository.SubscriptionRepository;
+import com.example.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class PublicationService {
 
     private final PublicationRepository publicationRepository;
+    private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
 
-    public PublicationService(PublicationRepository publicationRepository, SubscriptionRepository subscriptionRepository) {
+    public PublicationService(PublicationRepository publicationRepository, UserRepository userRepository, SubscriptionRepository subscriptionRepository) {
         this.publicationRepository = publicationRepository;
+        this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
     }
-
-    /**
-    public List<Publication> getAllPublications() {
-        return publicationRepository.findAll();
-    }*/
 
     public Publication getPublication(Long id) {
         return publicationRepository.getReferenceById(id);
     }
 
-    public List<Publication> getMyPublications(Long id) {
-        return publicationRepository.findByAuthorId(id);
+    public List<Publication> getMyPublications(String username) {
+        return publicationRepository.findByUsernameIgnoreCase(username);
     }
 
-    public Publication createPublication(Post post, MultipartFile file) throws IOException {
+    public Publication createPublication(String username, Post post, MultipartFile file) {
         Publication publication = new Publication();
-        return enterPublication(post, file, publication);
+        publication.setDate(LocalDate.now());
+        return enterPublication(username, post, file, publication);
     }
 
-    public Publication updatePublication(Long id, Post post, MultipartFile file) throws IOException {
+    public Publication updatePublication(String username, Long id, Post post, MultipartFile file) {
         Publication publication = publicationRepository.findById(id).orElse(null);
-        if (publication == null) { // добавить или с accessControl
-            return null;
+        if (publication != null && accessControl(username, publication.getUsername())) { // добавить или с accessControl
+            return enterPublication(username, post, file, publication);
         } else {
-            return enterPublication(post, file, publication);
+            return null;
         }
     }
 
-    public boolean removePublication(Long id){
+    public boolean removePublication(String username, Long id){
         Publication publication = publicationRepository.findById(id).orElse(null);
-        if (publication == null) { // добавить или с accessControl
-            return false;
-        } else {
+        if (publication != null && accessControl(username, publication.getUsername())) { // добавить или с accessControl
             publicationRepository.deleteById(id);
             return true;
+        } else {
+            return false;
         }
     }
 
 
+    // Возвращает публикации на кого подписан
+    public List<Publication> getPublicationsMySubscriptions(String username, Integer offset, Integer limit) {
 
-    /** // Возвращает публикации на кого подписан
-    public List<Publication> getPublicationsMySubscriptions(Long id) {
-        // написать сортировку по времени
-        List<Subscription> subscriptionListId = subscriptionRepository.getMySubscriptionsId(id);
-        if (subscriptionListId == null) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
             return null;
         } else {
-            List<Publication> publicationList = subscriptionListId.stream().map(subscription -> {
+            List<Subscription> subscriptionList = subscriptionRepository.getMySubscriptions(user.getId());
+            if (subscriptionList == null) {
+                return null;
+            }
+            List<Publication> publicationsList = new ArrayList<>();
+            for (Subscription subscription: subscriptionList) {
                 List<Publication> publications = publicationRepository.findByAuthorId(subscription.getToUser());
-                return publications.stream().map();
-            }).collect(Collectors.toList());
-
+                publicationsList.addAll(publications);
+            }
+            List<Publication> publicationsSort = publicationsList.stream()
+                    .sorted(Comparator.comparing(Publication::getDate)).collect(Collectors.toList());
+            Collections.reverse(publicationsSort);
+            return publicationsSort;
         }
-    }*/
-
-    // реализовать пагинацию!!!!!!!!!!!!!!!!!!!!
-
+    }
 
 
     // приватные методы класса
-    private Publication enterPublication(Post post, MultipartFile file, Publication publication) throws IOException {
-        publication.setAuthorId(post.getAuthorId());
-        publication.setUsername(post.getUsername());
-        publication.setHeader(post.getHeader());
-        publication.setText(post.getText());
-        publication.setImage(file.getBytes());
-        publicationRepository.save(publication);
-        return publication;
+
+    private Publication enterPublication(String username, Post post, MultipartFile file, Publication publication){
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return null;
+        } else {
+            publication.setAuthorId(user.getId());
+            publication.setUsername(user.getUsername());
+            publication.setHeader(post.getHeader());
+            publication.setText(post.getText());
+            try {
+                publication.setImage(file.getBytes());
+            } catch (IOException e) {
+                publication.setImage(null);
+                throw new RuntimeException("Data entry error " + e);
+            }
+            publicationRepository.save(publication);
+            return publication;
+        }
     }
 
-    private boolean accessControl(Long id, Long authorId) {
-        return id.equals(authorId);
+    private boolean accessControl(String username, String author) {
+        return username.equals(author);
     }
 
 }

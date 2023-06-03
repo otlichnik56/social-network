@@ -39,6 +39,7 @@ CREATE TABLE publications
     id          SERIAL PRIMARY KEY,
     author_id   INTEGER,
     username    TEXT,
+    date        TIMESTAMP,
     header      TEXT,
     text        TEXT,
     image       OID

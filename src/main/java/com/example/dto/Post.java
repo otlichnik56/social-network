@@ -7,10 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class Post {
 
-    private  Long authorId;
-
-    private String username;
-
     private String header;
 
     private String text;

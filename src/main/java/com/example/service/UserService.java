@@ -11,10 +11,12 @@ import com.example.repository.SubscriptionRepository;
 import com.example.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,10 +61,11 @@ public class UserService {
 
     /**
      * Получить список друзей
-     * @param id
+     * @param username
      * @return
      */
-    public List<UserDto> getAllFriends(Long id) {
+    public List<UserDto> getAllFriends(String username) {
+        Long id = getUserId(username);
         List<FriendRequest> friendIdList = friendRequestRepository.findMyFriendsId(id);
         if (friendIdList == null) {
             return null;
@@ -76,35 +79,38 @@ public class UserService {
 
     /** Просмотреть исходящие заявки в друзья
      * по id пользователя
-     * @param id
+     * @param username
      * @return
      */
-    public List<FriendRequest> incomingFriendship(Long id) {
+    public List<FriendRequest> incomingFriendship(String username) {
+        Long id = getUserId(username);
         return friendRequestRepository.findAllByFromUser(id);
     }
 
     /** Просмотреть входящие заявки в друзья
      * по id пользователя
-     * @param id
+     * @param username
      * @return
      */
-    public List<FriendRequest> outgoingFriendship(Long id) {
+    public List<FriendRequest> outgoingFriendship(String username) {
+        Long id = getUserId(username);
         return friendRequestRepository.findAllByToUser(id);
     }
 
     /** Отправить заявку в друзья
      * по id отправителя и id получателя
-     * @param fromUser
+     * @param username
      * @param toUser
      */
-    public void sendFriendship(Long fromUser, Long toUser) {
+    public void sendFriendship(String username, Long toUser) {
+        Long fromUser = getUserId(username);
         if (checkUser(toUser)) {
             FriendRequest friendRequest = new FriendRequest();
             friendRequest.setFromUser(fromUser);
             friendRequest.setToUser(toUser);
             friendRequest.setStatus(Status.ACTIVE);
             friendRequest.setDateRequest(LocalDate.now());
-            subscribe(fromUser, toUser);
+            subscribe(username, toUser);
         }
     }
 
@@ -113,14 +119,15 @@ public class UserService {
      * @param id
      * @return
      */
-    public String cancelFriendship(Long id) {
+    public String cancelFriendship(String username, Long id) {
         FriendRequest friendRequest = friendRequestRepository.findByFromToUsers(id).orElse(null);
-        if (friendRequest == null) {
-            return ANSWER_NOT_FOUND;
-        } else {
+        assert friendRequest != null;
+        if (Objects.equals(getUserId(username), friendRequest.getFromUser())) {
             friendRequest.setStatus(Status.NOT_ACTIVE);
             friendRequestRepository.save(friendRequest);
             return "friend request canceled";
+        } else {
+            return ANSWER_NOT_FOUND;
         }
     }
 
@@ -129,15 +136,16 @@ public class UserService {
      * @param id
      * @return
      */
-    public String acceptFriendship(Long id) {
+    public String acceptFriendship(String username, Long id) {
         FriendRequest friendRequest = friendRequestRepository.findByFromToUsers(id).orElse(null);
-        if (friendRequest == null) {
-            return ANSWER_NOT_FOUND;
-        } else {
+        assert friendRequest != null;
+        if (Objects.equals(getUserId(username), friendRequest.getFromUser())) {
             friendRequest.setStatus(Status.CONFIRMATION);
             friendRequestRepository.save(friendRequest);
-            subscribe(friendRequest.getToUser(), friendRequest.getFromUser());
+            subscribe(username, friendRequest.getFromUser());
             return "you have one new friend";
+        } else {
+            return ANSWER_NOT_FOUND;
         }
     }
 
@@ -146,32 +154,34 @@ public class UserService {
      * @param id
      * @return
      */
-    public String declineFriendship(Long id) {
+    public String declineFriendship(String username, Long id) {
         FriendRequest friendRequest = friendRequestRepository.findByFromToUsers(id).orElse(null);
-        if (friendRequest == null) {
-            return ANSWER_NOT_FOUND;
-        } else {
+        assert friendRequest != null;
+        if (Objects.equals(getUserId(username), friendRequest.getFromUser())) {
             friendRequest.setStatus(Status.NOT_ACTIVE);
             friendRequestRepository.save(friendRequest);
             return "friend request rejected";
+        } else {
+            return ANSWER_NOT_FOUND;
         }
     }
 
     /** Удалить из друзей
      * по id пользователя и id удаляемого
-     * @param fromUser
+     * @param username
      * @param toUser
      * @return
      */
-    public String deleteFriend(Long fromUser, Long toUser) {
-        if (checkUser(toUser)) {
+    public String deleteFriend(String username, Long toUser) {
+        Long fromUser = getUserId(username);
+        if (checkUser(toUser) && fromUser != null) {
             FriendRequest friendRequest = friendRequestRepository.findFriend(fromUser, toUser).orElse(null);
             if (friendRequest == null) {
                 return ANSWER_NOT_FOUND;
             } else {
                 friendRequest.setStatus(Status.NOT_ACTIVE);
                 friendRequestRepository.save(friendRequest);
-                unsubscribe(fromUser, toUser);
+                unsubscribe(username, toUser);
                 return "successfully unfriended";
             }
         } else {
@@ -184,11 +194,11 @@ public class UserService {
 
     /** Получить всех на кого подписан
      * По своему id
-     * @param id
+     * @param username
      * @return
      */
-    public List<UserDto> getAllSubscriptions(Long id) {
-        List<Subscription> subscriptionIdList = subscriptionRepository.getMySubscriptionsId(id);
+    public List<UserDto> getAllSubscriptions(String username) {
+        List<Subscription> subscriptionIdList = subscriptionRepository.getMySubscriptions(getUserId(username));
         if (subscriptionIdList == null) {
             return null;
         } else {
@@ -201,11 +211,12 @@ public class UserService {
 
     /** Подписаться на пользователя
      * По своему id и id на кого подписан
-     * @param fromUser
+     * @param username
      * @param toUser
      */
-    public void subscribe(Long fromUser, Long toUser) {
-        if (checkUser(toUser)) {
+    public void subscribe(String username, Long toUser) {
+        Long fromUser = getUserId(username);
+        if (checkUser(toUser) && fromUser != null) {
             Subscription subscription = new Subscription();
             subscription.setFromUser(fromUser);
             subscription.setToUser(toUser);
@@ -217,18 +228,33 @@ public class UserService {
 
     /** Отписаться от пользователя
      * По своему id и id на кого подписан
-     * @param fromUser
+     * @param username
      * @param toUser
      * @return
      */
-    public boolean unsubscribe(Long fromUser, Long toUser) {
-        Subscription subscription = subscriptionRepository.findSubscription(fromUser, toUser).orElse(null);
+    public boolean unsubscribe(String username, Long toUser) {
+        Subscription subscription = subscriptionRepository.findSubscription(getUserId(username), toUser).orElse(null);
         if (subscription == null) {
             return false;
         } else {
             subscription.setStatus(false);
             subscriptionRepository.save(subscription);
             return true;
+        }
+    }
+
+    /** Возвращает номер чата для переписки
+     * id запроса в друзья
+     * @param fromUser
+     * @param toUser
+     * @return
+     */
+    public String getChat(String fromUser, String toUser) {
+        FriendRequest friendRequest = friendRequestRepository.findFriend(getUserId(fromUser), getUserId(toUser)).orElse(null);
+        if (friendRequest == null) {
+            return null;
+        } else {
+            return friendRequest.getId().toString();
         }
     }
 
@@ -253,6 +279,15 @@ public class UserService {
             return false;
         } else {
             return true;
+        }
+    }
+
+    private Long getUserId(String username) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return null;
+        } else {
+            return user.getId();
         }
     }
 

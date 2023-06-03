@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -20,6 +21,9 @@ public class Publication {
 
     @Column(name = "username")
     private String username;
+
+    @Column(name = "date")
+    private LocalDate date;
 
     @Column(name = "header")
     private String header;
