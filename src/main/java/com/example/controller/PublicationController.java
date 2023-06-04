@@ -143,7 +143,6 @@ public class PublicationController {
         }
     }
 
-
     @Operation(summary = "Лента новостей",
             description = "показать ленту новостей, выводит постранично (по умолчанию по 20 записей)",
             responses = {
@@ -161,7 +160,7 @@ public class PublicationController {
     @PreAuthorize("isAuthenticated()")
     public List<Publication> getNews(@AuthenticationPrincipal UserDetails userDetails,
                                      @RequestParam(value = "offset", defaultValue = "0") @Min(0) Integer offset,
-                                     @RequestParam(value = "limit", defaultValue = "20") @Min(1) @Max(100) Integer limit) {
+                                     @RequestParam(value = "limit", defaultValue = "2") @Min(1) @Max(100) Integer limit) {
         return publicationService.getPublicationsMySubscriptions(userDetails.getUsername(), offset, limit);
     }
 

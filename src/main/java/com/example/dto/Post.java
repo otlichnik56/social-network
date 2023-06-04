@@ -13,7 +13,4 @@ public class Post {
 
     private String text;
 
-    public Post(String header) {
-        this.header = header;
-    }
 }

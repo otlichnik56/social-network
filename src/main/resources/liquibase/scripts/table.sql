@@ -42,5 +42,5 @@ CREATE TABLE publications
     date        TIMESTAMP,
     header      TEXT,
     text        TEXT,
-    image       OID
+    image       bytea
 );

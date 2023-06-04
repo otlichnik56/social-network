@@ -2,8 +2,7 @@ package com.example.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import javax.persistence.*;
 
 @Data
@@ -27,7 +26,7 @@ public class Subscription {
     private boolean status;
 
     @Column(name = "date_subscription")
-    private LocalDate dateSubscription;
+    private LocalDateTime dateSubscription;
 
     public Subscription() {
 

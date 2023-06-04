@@ -2,8 +2,10 @@ package com.example.service;
 
 import com.example.dto.Post;
 import com.example.entity.Publication;
+import com.example.entity.Subscription;
 import com.example.entity.User;
 import com.example.repository.PublicationRepository;
+import com.example.repository.SubscriptionRepository;
 import com.example.repository.UserRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -11,18 +13,21 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class PublicationService {
 
     private final PublicationRepository publicationRepository;
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
 
-    public PublicationService(PublicationRepository publicationRepository, UserRepository userRepository) {
+    public PublicationService(PublicationRepository publicationRepository, UserRepository userRepository, SubscriptionRepository subscriptionRepository) {
         this.publicationRepository = publicationRepository;
         this.userRepository = userRepository;
+        this.subscriptionRepository = subscriptionRepository;
     }
 
     public Publication getPublication(Long id) {
@@ -35,7 +40,7 @@ public class PublicationService {
 
     public Publication createPublication(String username, Post post, MultipartFile file) {
         Publication publication = new Publication();
-        publication.setDate(LocalDate.now());
+        publication.setDate(LocalDateTime.now());
         return enterPublication(username, post, file, publication);
     }
 
@@ -59,39 +64,18 @@ public class PublicationService {
     }
 
 
-    // Возвращает публикации на кого подписан
     public List<Publication> getPublicationsMySubscriptions(String username, Integer offset, Integer limit) {
         Pageable pageable = PageRequest.of(offset, limit, Sort.by("date").descending());
         User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null) {
+        assert user != null;
+        List<Subscription> subscriptionList = subscriptionRepository.getMySubscriptions(user.getId());
+        if (subscriptionList == null) {
             return null;
         } else {
-            return publicationRepository.findPublicationsMySubscriptions(user.getId(), pageable);
+            List<Long> ids = subscriptionList.stream().map(Subscription::getToUser).collect(Collectors.toList());
+            return publicationRepository.findByAuthorIdIn(ids, pageable);
         }
     }
-
-
-    /**
-    public List<Publication> getPublicationsMySubscriptions(String username, Integer offset, Integer limit) {
-        User user = userRepository.findByUsername(username).orElse(null);
-        if (user == null) {
-            return null;
-        } else {
-            List<Subscription> subscriptionList = subscriptionRepository.getMySubscriptions(user.getId());
-            if (subscriptionList == null) {
-                return null;
-            }
-            List<Publication> publicationsList = new ArrayList<>();
-            for (Subscription subscription: subscriptionList) {
-                List<Publication> publications = publicationRepository.findByAuthorId(subscription.getToUser());
-                publicationsList.addAll(publications);
-            }
-            List<Publication> publicationsSort = publicationsList.stream()
-                    .sorted(Comparator.comparing(Publication::getDate)).collect(Collectors.toList());
-            Collections.reverse(publicationsSort);
-            return publicationsSort;
-        }
-    }  */
 
 
     // приватные методы класса

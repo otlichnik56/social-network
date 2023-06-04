@@ -2,9 +2,10 @@ package com.example.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -23,7 +24,7 @@ public class Publication {
     private String username;
 
     @Column(name = "date")
-    private LocalDate date;
+    private LocalDateTime date;
 
     @Column(name = "header")
     private String header;
@@ -33,6 +34,7 @@ public class Publication {
 
     @Column(name = "image")
     @Lob
+    @Type(type = "org.hibernate.type.ImageType")
     private byte[] image;
 
     public Publication() {

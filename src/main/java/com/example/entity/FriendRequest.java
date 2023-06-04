@@ -3,8 +3,7 @@ package com.example.entity;
 import com.example.dto.Status;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import javax.persistence.*;
 
 @Data
@@ -28,10 +27,10 @@ public class FriendRequest {
     private Status status;
 
     @Column(name = "date_request")
-    private LocalDate dateRequest;
+    private LocalDateTime dateRequest;
 
     @Column(name = "date_response")
-    private LocalDate dateResponse;
+    private LocalDateTime dateResponse;
 
     public FriendRequest() {
 

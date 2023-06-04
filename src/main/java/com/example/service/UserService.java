@@ -1,6 +1,5 @@
 package com.example.service;
 
-
 import com.example.dto.Status;
 import com.example.dto.UserDto;
 import com.example.entity.FriendRequest;
@@ -11,10 +10,8 @@ import com.example.repository.SubscriptionRepository;
 import com.example.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -125,7 +122,7 @@ public class UserService {
             friendRequest.setFromUser(fromUser);
             friendRequest.setToUser(toUser);
             friendRequest.setStatus(Status.ACTIVE);
-            friendRequest.setDateRequest(LocalDate.now());
+            friendRequest.setDateRequest(LocalDateTime.now());
             friendRequestRepository.save(friendRequest);
             subscribe(username, toUser);
         }
@@ -162,7 +159,7 @@ public class UserService {
             return ANSWER_NOT_FOUND;
         } else if (Objects.equals(toUser, friendRequest.getToUser())) {
             friendRequest.setStatus(Status.CONFIRMATION);
-            friendRequest.setDateResponse(LocalDate.now());
+            friendRequest.setDateResponse(LocalDateTime.now());
             friendRequestRepository.save(friendRequest);
             subscribe(username, friendRequest.getFromUser());
             return "you have one new friend";
@@ -183,7 +180,7 @@ public class UserService {
             return ANSWER_NOT_FOUND;
         } else if (Objects.equals(toUser, friendRequest.getToUser())) {
             friendRequest.setStatus(Status.NOT_ACTIVE);
-            friendRequest.setDateResponse(LocalDate.now());
+            friendRequest.setDateResponse(LocalDateTime.now());
             friendRequestRepository.save(friendRequest);
             return "friend request rejected";
         } else {
@@ -246,7 +243,7 @@ public class UserService {
             subscription.setFromUser(fromUser);
             subscription.setToUser(toUser);
             subscription.setStatus(true);
-            subscription.setDateSubscription(LocalDate.now());
+            subscription.setDateSubscription(LocalDateTime.now());
             subscriptionRepository.save(subscription);
         }
     }
