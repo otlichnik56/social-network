@@ -28,7 +28,11 @@ public class SecurityConfig {
             "/swagger-ui/index.html",
             "/v3/api-docs",
             "/webjars/**",
-            "/auth/**", "/user/**"
+            "/auth/**"
+    };
+
+    private static final String[] SECURITY_LIST = {
+            "/user/**", "/post/**"
     };
 
     @Autowired
@@ -45,7 +49,7 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers(AUTH_WHITELIST)
                 .permitAll()
-                .antMatchers("/test/**")
+                .antMatchers(SECURITY_LIST)
                 .permitAll().anyRequest().authenticated();
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();

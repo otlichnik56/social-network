@@ -8,7 +8,12 @@ import com.example.dto.SignupRequest;
 import com.example.repository.UserRepository;
 import com.example.security.JwtUtils;
 import com.example.security.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,6 +39,19 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
+    @Operation(summary = "Авторизация пользователя",
+            description = "введите логин и пароль",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "получение токена",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = LoginRequest.class)
+                            )
+                    )
+            }
+    )
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
 
@@ -48,6 +66,24 @@ public class AuthController {
         return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail()));
     }
 
+
+    @Operation(summary = "Регистрация пользователя",
+            description = "для регистрации введите логин, email и пароль",
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "пользователь успешно зарегистрирован",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(implementation = SignupRequest.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "пользователь с таким именем или email уже существует"
+                    )
+            }
+    )
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signUpRequest) {
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {

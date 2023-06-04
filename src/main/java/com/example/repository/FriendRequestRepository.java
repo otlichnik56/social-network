@@ -21,7 +21,6 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
     @Query(value = "SELECT * FROM friend_requests WHERE status = 0 AND to_user = :id", nativeQuery = true)
     List<FriendRequest> findAllByToUser(Long id);
 
-    @Query(value = "SELECT * FROM friend_requests WHERE id = :id", nativeQuery = true)
-    Optional<FriendRequest> findByFromToUsers(Long id);
+    Optional<FriendRequest> findByFromUserAndToUser(Long fromUser, Long toUser);
 
 }

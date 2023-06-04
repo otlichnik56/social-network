@@ -12,7 +12,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query(value = "SELECT * FROM subscriptions WHERE status = true AND from_user = :id", nativeQuery = true)
     List<Subscription> getMySubscriptions(Long id);
 
-    @Query(value = "SELECT * FROM subscriptions WHERE status = true AND from_user = :fromUser AND from_user = :toUser", nativeQuery = true)
+    @Query(value = "SELECT * FROM subscriptions WHERE status = true AND from_user = :fromUser AND to_user = :toUser", nativeQuery = true)
     Optional<Subscription> findSubscription(Long fromUser, Long toUser);
 
 }

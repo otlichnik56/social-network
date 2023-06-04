@@ -109,7 +109,6 @@ public class PublicationService {
                 publication.setImage(file.getBytes());
             } catch (IOException e) {
                 publication.setImage(null);
-                throw new RuntimeException("Data entry error " + e);
             }
             publicationRepository.save(publication);
             return publication;
