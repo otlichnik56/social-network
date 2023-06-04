@@ -8,8 +8,6 @@ import com.example.entity.User;
 import com.example.repository.FriendRequestRepository;
 import com.example.repository.SubscriptionRepository;
 import com.example.repository.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,8 +16,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final String ANSWER_NOT_FOUND = "record not found";
     private final UserRepository userRepository;
